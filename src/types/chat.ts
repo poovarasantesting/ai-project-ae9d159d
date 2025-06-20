@@ -1,7 +1,12 @@
-export interface MessageType {
+export interface ChatMessage {
   id: string;
-  sender: string;
   text: string;
+  sender: "user" | "bot" | "system";
   timestamp: string;
-  isOwn: boolean;
+}
+
+export interface Conversation {
+  id: string;
+  name: string;
+  messages: ChatMessage[];
 }

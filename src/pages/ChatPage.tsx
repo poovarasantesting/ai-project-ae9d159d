@@ -1,98 +1,105 @@
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import ChatSidebar from "@/components/chat/ChatSidebar";
-import ChatWindow from "@/components/chat/ChatWindow";
-import { MessageType } from "@/types/chat";
+import { v4 as uuidv4 } from "uuid";
+import { toast } from "sonner";
+import ChatSidebar from "../components/chat/ChatSidebar";
+import ChatWindow from "../components/chat/ChatWindow";
+import { ChatMessage, Conversation } from "../types/chat";
+
+const initialConversations: Conversation[] = [
+  {
+    id: "1",
+    name: "General Chat",
+    messages: [
+      {
+        id: "msg1",
+        text: "Welcome to the chat app!",
+        sender: "system",
+        timestamp: new Date().toISOString(),
+      },
+    ],
+  },
+];
 
 export default function ChatPage() {
-  const { toast } = useToast();
-  const [activeChat, setActiveChat] = useState<string | null>("chat1");
-  const [chats, setChats] = useState<Record<string, MessageType[]>>({
-    chat1: [
-      { id: "1", sender: "John", text: "Hey, how are you?", timestamp: new Date().toISOString(), isOwn: false },
-      { id: "2", sender: "You", text: "I'm good! How about you?", timestamp: new Date().toISOString(), isOwn: true },
-    ],
-    chat2: [
-      { id: "1", sender: "Sarah", text: "Did you finish the project?", timestamp: new Date().toISOString(), isOwn: false },
-      { id: "2", sender: "You", text: "Still working on it!", timestamp: new Date().toISOString(), isOwn: true },
-    ],
-  });
+  const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
+  const [activeConversationId, setActiveConversationId] = useState<string>(initialConversations[0].id);
 
-  const sendMessage = (text: string) => {
-    if (!activeChat) return;
-    
-    const newMessage: MessageType = {
-      id: Date.now().toString(),
-      sender: "You",
-      text,
-      timestamp: new Date().toISOString(),
-      isOwn: true,
+  const activeConversation = conversations.find((conv) => conv.id === activeConversationId) || conversations[0];
+
+  const createNewConversation = () => {
+    const newConversation: Conversation = {
+      id: uuidv4(),
+      name: `New Chat ${conversations.length + 1}`,
+      messages: [],
     };
-
-    setChats(prev => ({
-      ...prev,
-      [activeChat]: [...(prev[activeChat] || []), newMessage],
-    }));
-
-    toast({
-      title: "Message sent",
-      description: "Your message has been sent successfully",
-    });
-
-    // Simulate response after 1 second
-    setTimeout(() => {
-      const responseMessage: MessageType = {
-        id: (Date.now() + 1).toString(),
-        sender: activeChat === "chat1" ? "John" : "Sarah",
-        text: `Thanks for your message: "${text}"`,
-        timestamp: new Date().toISOString(),
-        isOwn: false,
-      };
-
-      setChats(prev => ({
-        ...prev,
-        [activeChat]: [...(prev[activeChat] || []), responseMessage],
-      }));
-    }, 1000);
+    
+    setConversations([...conversations, newConversation]);
+    setActiveConversationId(newConversation.id);
+    toast.success("New conversation created");
   };
 
-  const createNewChat = () => {
-    const newChatId = `chat${Object.keys(chats).length + 1}`;
-    const contactName = `Contact ${Object.keys(chats).length + 1}`;
+  const renameConversation = (id: string, newName: string) => {
+    setConversations(
+      conversations.map((conv) =>
+        conv.id === id ? { ...conv, name: newName } : conv
+      )
+    );
+    toast.success("Conversation renamed");
+  };
+
+  const deleteConversation = (id: string) => {
+    const filteredConversations = conversations.filter((conv) => conv.id !== id);
+    setConversations(filteredConversations);
     
-    setChats(prev => ({
-      ...prev,
-      [newChatId]: [{
-        id: "1",
-        sender: contactName,
-        text: `Hi! This is ${contactName}. How can I help you?`,
-        timestamp: new Date().toISOString(),
-        isOwn: false,
-      }],
-    }));
+    if (id === activeConversationId && filteredConversations.length > 0) {
+      setActiveConversationId(filteredConversations[0].id);
+    }
     
-    setActiveChat(newChatId);
+    toast.success("Conversation deleted");
+  };
+
+  const sendMessage = (text: string) => {
+    if (!text.trim()) return;
     
-    toast({
-      title: "New chat created",
-      description: `Started conversation with ${contactName}`,
-    });
+    const newMessage: ChatMessage = {
+      id: uuidv4(),
+      text,
+      sender: "user",
+      timestamp: new Date().toISOString(),
+    };
+    
+    const botReply: ChatMessage = {
+      id: uuidv4(),
+      text: `Reply to: "${text.substring(0, 30)}${text.length > 30 ? '...' : ''}"`,
+      sender: "bot",
+      timestamp: new Date(Date.now() + 1000).toISOString(),
+    };
+    
+    setConversations(
+      conversations.map((conv) =>
+        conv.id === activeConversationId
+          ? {
+              ...conv,
+              messages: [...conv.messages, newMessage, botReply],
+            }
+          : conv
+      )
+    );
   };
 
   return (
-    <div className="flex h-screen bg-slate-50">
-      <ChatSidebar 
-        chats={chats} 
-        activeChat={activeChat} 
-        setActiveChat={setActiveChat} 
-        createNewChat={createNewChat}
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900">
+      <ChatSidebar
+        conversations={conversations}
+        activeConversationId={activeConversationId}
+        onSelectConversation={setActiveConversationId}
+        onNewConversation={createNewConversation}
+        onRenameConversation={renameConversation}
+        onDeleteConversation={deleteConversation}
       />
-      <ChatWindow 
-        messages={activeChat ? chats[activeChat] || [] : []} 
-        sendMessage={sendMessage}
-        activeChatName={activeChat ? 
-          (activeChat === "chat1" ? "John" : activeChat === "chat2" ? "Sarah" : `Contact ${activeChat.replace("chat", "")}`) 
-          : null}
+      <ChatWindow
+        conversation={activeConversation}
+        onSendMessage={sendMessage}
       />
     </div>
   );
