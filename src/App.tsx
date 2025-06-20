@@ -1,12 +1,20 @@
-import RegistrationForm from "./components/RegistrationForm";
-import { Toaster } from "./components/ui/toaster";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import ChatPage from "@/pages/ChatPage";
+
+const queryClient = new QueryClient();
 
 function App() {
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
-      <RegistrationForm />
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<ChatPage />} />
+        </Routes>
+      </BrowserRouter>
       <Toaster />
-    </main>
+    </QueryClientProvider>
   );
 }
 
