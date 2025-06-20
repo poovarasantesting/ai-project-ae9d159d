@@ -1,14 +1,13 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import ContactPage from "./pages/Contact";
+import RegistrationForm from "./components/RegistrationForm";
+import { Toaster } from "./components/ui/toaster";
 
-export default function App() {
+function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<ContactPage />} />
-      </Routes>
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4">
+      <RegistrationForm />
       <Toaster />
-    </BrowserRouter>
+    </main>
   );
 }
+
+export default App;
