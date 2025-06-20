@@ -1,8 +1,8 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from "@/components/ui/toaster";
-import Login from "./pages/Login";
+import Login from './pages/Login';
 
-function App() {
+export default function App() {
   return (
     <BrowserRouter>
       <Routes>
@@ -12,5 +12,3 @@ function App() {
     </BrowserRouter>
   );
 }
-
-export default App;
