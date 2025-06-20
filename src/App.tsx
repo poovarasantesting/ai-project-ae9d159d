@@ -1,12 +1,17 @@
-import React from "react";
-import { LoginForm } from "./components/LoginForm";
+import { BrowserRouter } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
+import ChatPage from "@/pages/ChatPage";
 
-export default function App() {
+function App() {
   return (
-    <main className="min-h-screen bg-background">
-      <LoginForm />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<ChatPage />} />
+      </Routes>
       <Toaster />
-    </main>
+    </BrowserRouter>
   );
 }
+
+export default App;

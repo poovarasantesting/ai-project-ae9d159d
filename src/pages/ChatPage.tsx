@@ -1,87 +1,99 @@
 import { useState } from "react";
-import { Send } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import ChatMessage from "@/components/ChatMessage";
-
-interface Message {
-  id: number;
-  text: string;
-  sender: "user" | "other";
-  timestamp: Date;
-}
+import { useToast } from "@/components/ui/use-toast";
+import ChatSidebar from "@/components/chat/ChatSidebar";
+import ChatWindow from "@/components/chat/ChatWindow";
+import { MessageType } from "@/types/chat";
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      text: "Hello! How can I help you today?",
-      sender: "other",
-      timestamp: new Date(),
-    },
-  ]);
-  const [newMessage, setNewMessage] = useState("");
+  const { toast } = useToast();
+  const [activeChat, setActiveChat] = useState<string | null>("chat1");
+  const [chats, setChats] = useState<Record<string, MessageType[]>>({
+    chat1: [
+      { id: "1", sender: "John", text: "Hey, how are you?", timestamp: new Date().toISOString(), isOwn: false },
+      { id: "2", sender: "You", text: "I'm good! How about you?", timestamp: new Date().toISOString(), isOwn: true },
+    ],
+    chat2: [
+      { id: "1", sender: "Sarah", text: "Did you finish the project?", timestamp: new Date().toISOString(), isOwn: false },
+      { id: "2", sender: "You", text: "Still working on it!", timestamp: new Date().toISOString(), isOwn: true },
+    ],
+  });
 
-  const handleSendMessage = () => {
-    if (newMessage.trim() === "") return;
+  const sendMessage = (text: string) => {
+    if (!activeChat) return;
     
-    // Add user message
-    const userMessage: Message = {
-      id: messages.length + 1,
-      text: newMessage,
-      sender: "user",
-      timestamp: new Date(),
+    const newMessage: MessageType = {
+      id: Date.now().toString(),
+      sender: "You",
+      text,
+      timestamp: new Date().toISOString(),
+      isOwn: true,
     };
-    
-    setMessages((prev) => [...prev, userMessage]);
-    setNewMessage("");
-    
-    // Simulate response after a short delay
+
+    setChats(prev => ({
+      ...prev,
+      [activeChat]: [...(prev[activeChat] || []), newMessage],
+    }));
+
+    toast({
+      title: "Message sent",
+      description: "Your message has been sent successfully",
+    });
+
+    // Simulate response after 1 second
     setTimeout(() => {
-      const responseMessage: Message = {
-        id: messages.length + 2,
-        text: `I received your message: "${newMessage}"`,
-        sender: "other",
-        timestamp: new Date(),
+      const responseMessage: MessageType = {
+        id: (Date.now() + 1).toString(),
+        sender: activeChat === "chat1" ? "John" : "Sarah",
+        text: `Thanks for your message: "${text}"`,
+        timestamp: new Date().toISOString(),
+        isOwn: false,
       };
-      setMessages((prev) => [...prev, responseMessage]);
+
+      setChats(prev => ({
+        ...prev,
+        [activeChat]: [...(prev[activeChat] || []), responseMessage],
+      }));
     }, 1000);
   };
 
+  const createNewChat = () => {
+    const newChatId = `chat${Object.keys(chats).length + 1}`;
+    const contactName = `Contact ${Object.keys(chats).length + 1}`;
+    
+    setChats(prev => ({
+      ...prev,
+      [newChatId]: [{
+        id: "1",
+        sender: contactName,
+        text: `Hi! This is ${contactName}. How can I help you?`,
+        timestamp: new Date().toISOString(),
+        isOwn: false,
+      }],
+    }));
+    
+    setActiveChat(newChatId);
+    
+    toast({
+      title: "New chat created",
+      description: `Started conversation with ${contactName}`,
+    });
+  };
+
   return (
-    <div className="flex flex-col h-screen max-w-3xl mx-auto p-4">
-      <header className="pb-4 border-b">
-        <h1 className="text-2xl font-bold">Chat App</h1>
-      </header>
-      
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-4">
-          {messages.map((message) => (
-            <ChatMessage key={message.id} message={message} />
-          ))}
-        </div>
-      </ScrollArea>
-      
-      <div className="pt-4 border-t mt-auto">
-        <div className="flex gap-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type your message..."
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSendMessage();
-              }
-            }}
-            className="flex-1"
-          />
-          <Button onClick={handleSendMessage} type="submit">
-            <Send className="h-4 w-4 mr-2" />
-            Send
-          </Button>
-        </div>
-      </div>
+    <div className="flex h-screen bg-slate-50">
+      <ChatSidebar 
+        chats={chats} 
+        activeChat={activeChat} 
+        setActiveChat={setActiveChat} 
+        createNewChat={createNewChat}
+      />
+      <ChatWindow 
+        messages={activeChat ? chats[activeChat] || [] : []} 
+        sendMessage={sendMessage}
+        activeChatName={activeChat ? 
+          (activeChat === "chat1" ? "John" : activeChat === "chat2" ? "Sarah" : `Contact ${activeChat.replace("chat", "")}`) 
+          : null}
+      />
     </div>
   );
 }
