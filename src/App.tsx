@@ -1,14 +1,14 @@
-import React from "react"
-import RegistrationForm from "./components/RegistrationForm"
-import { Toaster } from "./components/ui/toaster"
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
+import ChatPage from "@/pages/ChatPage";
 
-function App() {
+export default function App() {
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
-      <RegistrationForm />
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<ChatPage />} />
+      </Routes>
       <Toaster />
-    </div>
-  )
+    </BrowserRouter>
+  );
 }
-
-export default App
